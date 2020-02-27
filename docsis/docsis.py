@@ -10,14 +10,16 @@ libc = CDLL(find_library('c'))
 lib_lock = Lock()
 
 def set_libdocsis_path(path):
+	lib_lock.acquire()
 	global libdocsis_path
 	libdocsis_path = path
+	lib_lock.release()
 
 def load_libdocsis():
 	lib_lock.acquire()
+	global libdocsis, libdocsis_path
 	if libdocsis is not None:
 		return
-	global libdocsis, libdocsis_path
 	if libdocsis_path is None:
 		libdocsis_path = './libdocsis.so'
 	libdocsis = cdll.LoadLibrary(libdocsis_path)
