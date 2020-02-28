@@ -19,6 +19,7 @@ def load_libdocsis():
 	lib_lock.acquire()
 	global libdocsis, libdocsis_path
 	if libdocsis is not None:
+		lib_lock.release()
 		return
 	if libdocsis_path is None:
 		libdocsis_path = './libdocsis.so'
