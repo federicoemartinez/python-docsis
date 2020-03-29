@@ -10,12 +10,14 @@ libc = CDLL(find_library('c'))
 lib_lock = Lock()
 
 def set_libdocsis_path(path):
+	global lib_lock
 	lib_lock.acquire()
 	global libdocsis_path
 	libdocsis_path = path
 	lib_lock.release()
 
 def load_libdocsis():
+	global lib_lock
 	lib_lock.acquire()
 	global libdocsis, libdocsis_path
 	if libdocsis is not None:
@@ -35,11 +37,13 @@ def encode_content(content, key, encode_docsis=True, hash= 0):
 		raise Exception('You have to load libdocsis first!')
 
 	p = char_pointer()
+	keyp = c_char_p(key.encode('utf8'))
+	contentp = c_char_p(content)
 	p1 = char_pointer_pointer(p)
-
-	output_size = libdocsis.encode_file(content, len(content),p1, key,len(key),1 if encode_docsis else 0,hash) 
+	output_size = libdocsis.encode_file(contentp, len(content),p1, keyp,len(key),1 if encode_docsis else 0,hash)
 	if output_size == 0: raise Exception('Unable to encode file')
-	ret = ''.join(chr(p1.contents[i]) for i in range(output_size))
+	ret = b''.join(p1.contents[i].to_bytes(1,'big') for i in range(output_size))
+
 	libc.free(p)
 	
 	if len(ret) == 0: raise Exception('Unable to encode file')
@@ -54,7 +58,7 @@ if __name__ == '__main__':
 	ret = encode_content(content, 'a key', encode_docsis=True, hash= 0)
 	out = open('docsis.bin', 'wb')
 	#print(ret)
-	out.write(ret.encode('utf8'))
+	out.write(ret)
 	out.close()
 
 
